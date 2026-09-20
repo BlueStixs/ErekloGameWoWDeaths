@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WoW Death Counter</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&display=swap');
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: transparent;
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        /* Main OBS Widget Box matching reference layout */
+        .widget-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 400px;
+            height: 95px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+            border: 2px solid #c79c2e; /* WoW Gold Accent */
+            border-radius: 14px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .left-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .main-label {
+            font-size: 32px;
+            font-weight: 900;
+            color: #c79c2e; /* WoW Gold */
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            line-height: 1.1;
+        }
+
+        .right-section {
+            display: flex;
+        }
+
+        .counter-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(25, 25, 25, 0.8);
+            border: 1px solid #444;
+            border-radius: 8px;
+            width: 105px;
+            height: 65px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .counter-value {
+            font-size: 38px; /* Increased font size */
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1.1; /* Tighter line height for better vertical footprint */
+        }
+
+        .counter-sub {
+            font-size: 9px;
+            font-weight: 700;
+            color: #888888;
+            margin-top: 2px;
+            letter-spacing: 1px;
+        }
+
+        /* Control Panel for Streamer to change count */
+        .control-panel {
+            display: flex;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.75);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            align-items: center;
+        }
+
+        .control-panel button {
+            background: #c79c2e;
+            color: #111;
+            border: none;
+            font-weight: 800;
+            font-size: 14px;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .control-panel button:hover {
+            background: #e6b839;
+        }
+
+        .control-panel input {
+            width: 50px;
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- OBS Widget Display -->
+    <div class="widget-container">
+        <div class="left-section">
+            <div class="main-label">DEATHS</div>
+        </div>
+        <div class="right-section">
+            <div class="counter-box">
+                <div class="counter-value" id="death-display">0</div>
+                <div class="counter-sub">TOTAL</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Streamer Control Panel -->
+    <div class="control-panel">
+        <button id="btn-minus">-</button>
+        <input type="number" id="death-input" value="0">
+        <button id="btn-plus">+</button>
+    </div>
+
+    <script>
+        let currentDeaths = 0;
+
+        const displayEl = document.getElementById('death-display');
+        const inputEl = document.getElementById('death-input');
+        const btnMinus = document.getElementById('btn-minus');
+        const btnPlus = document.getElementById('btn-plus');
+
+        function updateDisplay(val) {
+            currentDeaths = Math.max(0, parseInt(val) || 0);
+            displayEl.textContent = currentDeaths;
+            inputEl.value = currentDeaths;
+            localStorage.setItem('wow_deaths', currentDeaths);
+        }
+
+        const saved = localStorage.getItem('wow_deaths');
+        if (saved !== null) {
+            updateDisplay(saved);
+        }
+
+        btnMinus.addEventListener('click', () => {
+            updateDisplay(currentDeaths - 1);
+        });
+
+        btnPlus.addEventListener('click', () => {
+            updateDisplay(currentDeaths + 1);
+        });
+
+        inputEl.addEventListener('input', (e) => {
+            updateDisplay(e.target.value);
+        });
+    </script>
+
+</body>
+</html>
