@@ -80,59 +80,6 @@
             margin-top: 2px;
             letter-spacing: 1px;
         }
-
-        /* Control Panels for Streamer */
-        .controls-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .control-panel {
-            display: flex;
-            gap: 8px;
-            background: rgba(0, 0, 0, 0.75);
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            align-items: center;
-        }
-
-        .control-label {
-            color: #c79c2e;
-            font-weight: 800;
-            font-size: 13px;
-            width: 55px;
-        }
-
-        .control-panel button {
-            background: #c79c2e;
-            color: #111;
-            border: none;
-            font-weight: 800;
-            font-size: 14px;
-            width: 28px;
-            height: 28px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .control-panel button:hover {
-            background: #e6b839;
-        }
-
-        .control-panel input {
-            width: 50px;
-            background: #222;
-            color: #fff;
-            border: 1px solid #555;
-            border-radius: 4px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            padding: 4px;
-        }
     </style>
 </head>
 <body>
@@ -144,71 +91,64 @@
         </div>
         <div class="right-section">
             <div class="counter-box">
-                <div class="counter-value" id="jake-display">0</div>
+                <div class="counter-value" id="jake-display">Loading...</div>
                 <div class="counter-sub">JAKE</div>
             </div>
             <div class="counter-box">
-                <div class="counter-value" id="joe-display">0</div>
+                <div class="counter-value" id="joe-display">Loading...</div>
                 <div class="counter-sub">JOE</div>
             </div>
         </div>
     </div>
 
-    <!-- Streamer Control Panels -->
-    <div class="controls-wrapper">
-        <div class="control-panel">
-            <span class="control-label">Jake</span>
-            <button id="jake-minus">-</button>
-            <input type="number" id="jake-input" value="0">
-            <button id="jake-plus">+</button>
-        </div>
-        <div class="control-panel">
-            <span class="control-label">Joe</span>
-            <button id="joe-minus">-</button>
-            <input type="number" id="joe-input" value="0">
-            <button id="joe-plus">+</button>
-        </div>
-    </div>
-
     <script>
-        // State Management
-        let deaths = {
-            jake: parseInt(localStorage.getItem('wow_deaths_jake')) || 0,
-            joe: parseInt(localStorage.getItem('wow_deaths_joe')) || 0
-        };
+        // --- CONFIGURATION ---
+        const SPREADSHEET_ID = '15jYccCuwQgF6j7znFmTJIWanspwnGv4WkUVA8Vb_tk0';
+        const API_KEY = 'AIzaSyAIZkvjBQ65t2rS3WE6NpAJOOoibWhTasU';
+        
+        // Define the specific cell range for each player
+        const JAKE_RANGE = 'Sheet1!A2'; 
+        const JOE_RANGE = 'Sheet1!B2'; 
+        
+        const REFRESH_RATE = 3000; // Time in milliseconds (3000ms = 3 seconds)
 
-        const jakeDisplay = document.getElementById('jake-display');
-        const joeDisplay = document.getElementById('joe-display');
-        const jakeInput = document.getElementById('jake-input');
-        const joeInput = document.getElementById('joe-input');
-
-        function updateCounter(player, val) {
-            deaths[player] = Math.max(0, parseInt(val) || 0);
-            
-            if (player === 'jake') {
-                jakeDisplay.textContent = deaths.jake;
-                jakeInput.value = deaths.jake;
-                localStorage.setItem('wow_deaths_jake', deaths.jake);
-            } else {
-                joeDisplay.textContent = deaths.joe;
-                joeInput.value = deaths.joe;
-                localStorage.setItem('wow_deaths_joe', deaths.joe);
+        async function fetchCellValue(range) {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}?key=${API_KEY}`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+                if (data.values && data.values[0] && data.values[0][0] !== undefined) {
+                    return data.values[0][0];
+                }
+                return '0';
+            } catch (error) {
+                console.error(`Error fetching data for range ${range}:`, error);
+                return null;
             }
         }
 
-        // Initialize displays with saved values
-        updateCounter('jake', deaths.jake);
-        updateCounter('joe', deaths.joe);
+        async function updateCounters() {
+            // Fetch both values concurrently
+            const [jakeVal, joeVal] = await Promise.all([
+                fetchCellValue(JAKE_RANGE),
+                fetchCellValue(JOE_RANGE)
+            ]);
 
-        // Jake Event Listeners
-        document.getElementById('jake-minus').addEventListener('click', () => updateCounter('jake', deaths.jake - 1));
-        document.getElementById('jake-plus').addEventListener('click', () => updateCounter('jake', deaths.jake + 1));
-        jakeInput.addEventListener('input', (e) => updateCounter('jake', e.target.value));
+            if (jakeVal !== null) {
+                document.getElementById('jake-display').textContent = jakeVal;
+            }
+            if (joeVal !== null) {
+                document.getElementById('joe-display').textContent = joeVal;
+            }
+        }
 
-        // Joe Event Listeners
-        document.getElementById('joe-minus').addEventListener('click', () => updateCounter('joe', deaths.joe - 1));
-        document.getElementById('joe-plus').addEventListener('click', () => updateCounter('joe', deaths.joe + 1));
-        joeInput.addEventListener('input', (e) => updateCounter('joe', e.target.value));
+        // Fetch values immediately on page load
+        updateCounters();
+
+        // Automatically update the counters every X seconds
+        setInterval(updateCounters, REFRESH_RATE);
     </script>
 
 </body>
